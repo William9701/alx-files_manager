@@ -9,8 +9,8 @@ exports.getStatus = async (req, res) => {
 };
 
 exports.getStats = async (req, res) => {
-  const numUsers = await db.getUsersCount();
-  const numFiles = await db.getFilesCount();
+  const numUsers = await db.nbUsers();
+  const numFiles = await db.nbFiles();
 
   res.status(200).json({ users: numUsers, files: numFiles });
 };

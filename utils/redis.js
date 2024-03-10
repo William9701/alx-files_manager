@@ -1,5 +1,6 @@
 /* eslint-disable quotes */
 const redis = require("redis");
+import { promisify } from 'util';
 
 class RedisClient {
   constructor() {
@@ -7,14 +8,17 @@ class RedisClient {
     this.client.on("error", (error) => {
       console.error(error);
     });
+    this.client.on('ready', () => {
+      this.isConnected = true;
+    });
+    this.Get = promisify(this.client.get).bind(this.client);
+    this.SetExp = promisify(this.client.set).bind(this.client);
+    this.Del = promisify(this.client.del).bind(this.client);
+    this.isConnected = false;
   }
 
   isAlive() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(this.client.connected);
-      }, 5000); // Delay of 5 seconds
-    });
+    return this.isConnected;
   }
 
   async get(key) {
