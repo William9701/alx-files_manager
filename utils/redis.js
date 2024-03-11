@@ -1,14 +1,11 @@
-/* eslint-disable quotes */
-const redis = require("redis");
-import { promisify } from 'util';
+import { promisify } from "util";
+import { createClient } from "redis";
 
 class RedisClient {
   constructor() {
-    this.client = redis.createClient();
-    this.client.on("error", (error) => {
-      console.error(error);
-    });
-    this.client.on('ready', () => {
+    this.client = createClient();
+    this.client.on("error", (err) => console.log(err));
+    this.client.on("ready", () => {
       this.isConnected = true;
     });
     this.Get = promisify(this.client.get).bind(this.client);
@@ -22,32 +19,22 @@ class RedisClient {
   }
 
   async get(key) {
-    return new Promise((resolve, reject) => {
-      this.client.get(key, (error, value) => {
-        if (error) return reject(error);
-        return resolve(value);
-      });
-    });
+    return this.Get(key).then((value) => value);
   }
 
   async set(key, value, duration) {
-    return new Promise((resolve, reject) => {
-      this.client.set(key, value, "EX", duration, (error, reply) => {
-        if (error) return reject(error);
-        return resolve(reply);
-      });
-    });
+    await this.SetExp(key, value);
+    if (duration) {
+      await this.client.expire(key, duration);
+    }
   }
 
   async del(key) {
-    return new Promise((resolve, reject) => {
-      this.client.del(key, (error, count) => {
-        if (error) return reject(error);
-        return resolve(count);
-      });
-    });
+    await this.Del(key);
   }
 }
 
 const redisClient = new RedisClient();
+
 module.exports = redisClient;
+// export default RedisClient
