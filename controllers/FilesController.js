@@ -13,14 +13,13 @@ class FilesController {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    console.log(req.body);
     const { name, type, parentId = 0, isPublic = false, data } = req.body;
 
     if (!name) {
       res.status(400).json({ error: "Missing name" });
       return;
     }
-    if (!type) {
+    if (!type || !['folder', 'file', 'image'].includes(type)) {
       res.status(400).json({ error: "Missing type" });
       return;
     }
@@ -70,6 +69,7 @@ class FilesController {
     await fs.promises.writeFile(filePath, Buffer.from(data, "base64"));
     file.localPath = filePath;
     if (type !== "folder") {
+      console.log(file);
       const result = await files.insertOne(file);
       const [{ name, _id, isPublic, userId, type, parentId }] = result.ops;
       res.status(201).json({
