@@ -5,6 +5,8 @@ import fs from 'fs';
 import mime from 'mime-types';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+const Bull = require('bull');
+const fileQueue = new Bull('fileQueue');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -88,6 +90,9 @@ class FilesController {
         isPublic,
         parentId,
       });
+      if (type === 'image') {
+	await fileQueue.add({ userId: userId, fileId: _id });
+      }
     }
   }
 
@@ -198,6 +203,7 @@ class FilesController {
 
   static async getFile(req, res) {
     const { id } = req.params;
+    const { size } = req.query;
     const fileCollection = dbClient.db.collection('files');
     const fileID = new ObjectID(id);
     const fileData = await fileCollection.findOne({ _id: fileID });
@@ -221,6 +227,15 @@ class FilesController {
       res.status(400).json({ error: "A folder doesn't have content" });
       return;
     }
+    let filename = fileData.localPath;
+    if (size) {
+      const validSizes = ['500', '250', '100'];
+      if (!validSizes.includes(size)) {
+        res.status(400).json({ error: 'Invalid size' });
+        return;
+      }
+      filename = `${fileData.localPath}_${size}`;
+    }
 
     fs.stat(fileData.localPath, (err) => {
       if (err) {
@@ -230,7 +245,7 @@ class FilesController {
 
     const mimeType = mime.lookup(fileData.name);
     res.setHeader('Content-Type', mimeType);
-    const fileContent = await fs.promises.readFile(fileData.localPath);
+    const fileContent = await fs.promises.readFile(filename);
     res.status(200).send(fileContent);
   }
 }
