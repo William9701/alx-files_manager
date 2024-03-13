@@ -1,11 +1,11 @@
-import { promisify } from "util";
-import { createClient } from "redis";
+import { promisify } from 'util';
+import { createClient } from 'redis';
 
 class RedisClient {
   constructor() {
     this.client = createClient();
-    this.client.on("error", (err) => console.log(err));
-    this.client.on("ready", () => {
+    this.client.on('error', (err) => console.log(err));
+    this.client.on('ready', () => {
       this.isConnected = true;
     });
     this.Get = promisify(this.client.get).bind(this.client);
@@ -37,4 +37,3 @@ class RedisClient {
 const redisClient = new RedisClient();
 
 module.exports = redisClient;
-// export default RedisClient
