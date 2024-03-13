@@ -5,7 +5,9 @@ import fs from 'fs';
 import mime from 'mime-types';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+
 const Bull = require('bull');
+
 const fileQueue = new Bull('fileQueue');
 
 class FilesController {
@@ -91,7 +93,7 @@ class FilesController {
         parentId,
       });
       if (type === 'image') {
-	await fileQueue.add({ userId: userId, fileId: _id });
+        await fileQueue.add({ userId, fileId: _id });
       }
     }
   }
